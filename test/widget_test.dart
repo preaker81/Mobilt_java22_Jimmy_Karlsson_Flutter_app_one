@@ -7,24 +7,16 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:flutter_app_one/main.dart';
+import 'package:flutter_app_one/main.dart'; // Importeringen ser korrekt ut
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('Test HomePage', (WidgetTester tester) async {
+    // Bygg vår app och utlös en frame.
+    await tester.pumpWidget(const MaterialApp(home: HomePage()));
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Verifiera att 'Home Page' visas i appbaren.
+    expect(find.text('Home Page'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Lägg till fler tester som passar din app här
   });
 }
