@@ -1,7 +1,45 @@
-import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sensors/sensors.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: LoginPage(),
+    );
+  }
+}
+
+class LoginPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Login')),
+      body: Column(
+        children: [
+          TextFormField(
+            decoration: InputDecoration(labelText: 'Username'),
+          ),
+          TextFormField(
+            decoration: InputDecoration(labelText: 'Password'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pushReplacement(
+                context, MaterialPageRoute(builder: (context) => HomePage())),
+            child: Text('Login'),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -18,6 +56,15 @@ class HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _loadSavedImages();
+    _listenForShake();
+  }
+
+  void _listenForShake() {
+    userAccelerometerEvents.listen((UserAccelerometerEvent event) {
+      if (event.x.abs() > 1.5 || event.y.abs() > 1.5 || event.z.abs() > 1.5) {
+        fetchCard();
+      }
+    });
   }
 
   _loadSavedImages() async {
@@ -51,8 +98,6 @@ class HomePageState extends State<HomePage> {
           await http.get(Uri.parse('https://api.scryfall.com/cards/random'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        print("Received Data: $data");
-
         setState(() {
           imageUrl = data['image_uris']['normal'];
           String cardName = data['name'];
@@ -68,13 +113,20 @@ class HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    double screenHeight = MediaQuery.of(context).size.height;
+    double reservedHeight = screenHeight * 0.3;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home Page'),
       ),
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: reservedHeight + 32.0,
             child: Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -82,19 +134,36 @@ class HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          ElevatedButton(onPressed: fetchCard, child: const Text('New Card')),
-          SingleChildScrollView(
-            child: Column(
-              children: history
-                  .map((card) => TextButton(
-                        onPressed: () {
-                          setState(() {
-                            imageUrl = card['url']!;
-                          });
-                        },
-                        child: Text(card['name']!),
-                      ))
-                  .toList(),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: reservedHeight,
+            child: Scrollbar(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: history
+                      .map((card) => TextButton(
+                            onPressed: () {
+                              setState(() {
+                                imageUrl = card['url']!;
+                              });
+                            },
+                            child: Text(card['name']!),
+                          ))
+                      .toList(),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: reservedHeight,
+            left: 0,
+            right: 0,
+            child: Align(
+              alignment: Alignment.center,
+              child: ElevatedButton(
+                  onPressed: fetchCard, child: const Text('New Card')),
             ),
           ),
         ],
