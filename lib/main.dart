@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sensors/sensors.dart';
+import 'package:flutter_sensors/flutter_sensors.dart';
 
 void main() {
   runApp(MyApp());
@@ -52,6 +53,8 @@ class HomePageState extends State<HomePage> {
   String imageUrl = "";
   List<Map<String, String>> history = [];
 
+  late StreamSubscription _accelSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -59,14 +62,26 @@ class HomePageState extends State<HomePage> {
     _listenForShake();
   }
 
-  void _listenForShake() {
-    userAccelerometerEvents.listen((UserAccelerometerEvent event) {
-      if (event.x.abs() > 20.0 ||
-          event.y.abs() > 20.0 ||
-          event.z.abs() > 20.0) {
+  void _listenForShake() async {
+    final stream = await SensorManager().sensorUpdates(
+      sensorId: Sensors.ACCELEROMETER,
+      interval: Sensors.SENSOR_DELAY_GAME,
+    );
+
+    _accelSubscription = stream.listen((sensorEvent) {
+      final accelData = sensorEvent.data;
+      if (accelData[0].abs() > 20.0 ||
+          accelData[1].abs() > 20.0 ||
+          accelData[2].abs() > 20.0) {
         fetchCard();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _accelSubscription.cancel();
+    super.dispose();
   }
 
   _loadSavedImages() async {
