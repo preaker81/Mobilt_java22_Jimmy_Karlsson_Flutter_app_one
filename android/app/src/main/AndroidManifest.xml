@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+<uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false" />
+
     <application
         android:label="flutter_app_one"
         android:name="${applicationName}"
