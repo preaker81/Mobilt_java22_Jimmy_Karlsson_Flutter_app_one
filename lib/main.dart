@@ -52,15 +52,15 @@ class HomePage extends StatefulWidget {
 class HomePageState extends State<HomePage> {
   String imageUrl = "";
   List<Map<String, String>> history = [];
-
   late StreamSubscription _accelSubscription;
 
   @override
   void initState() {
     super.initState();
-    _loadSavedImages();
     _listenForShake();
   }
+
+  bool canFetch = true;
 
   void _listenForShake() async {
     final stream = await SensorManager().sensorUpdates(
@@ -73,7 +73,13 @@ class HomePageState extends State<HomePage> {
       if (accelData[0].abs() > 20.0 ||
           accelData[1].abs() > 20.0 ||
           accelData[2].abs() > 20.0) {
-        fetchCard();
+        if (canFetch) {
+          fetchCard();
+          canFetch = false;
+          Timer(Duration(seconds: 2), () {
+            canFetch = true;
+          });
+        }
       }
     });
   }
@@ -84,7 +90,7 @@ class HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  _loadSavedImages() async {
+  Future<void> _loadSavedImages() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       setState(() {
@@ -96,7 +102,7 @@ class HomePageState extends State<HomePage> {
     }
   }
 
-  _saveImage(String name, String url) async {
+  Future<void> _saveImage(String name, String url) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       history.insert(0, {'name': name, 'url': url});
@@ -139,18 +145,42 @@ class HomePageState extends State<HomePage> {
       ),
       body: Stack(
         children: [
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: reservedHeight + 32.0,
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: imageUrl.isEmpty ? Container() : Image.network(imageUrl),
-              ),
-            ),
-          ),
+          FutureBuilder(
+              future: _loadSavedImages(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return CircularProgressIndicator();
+                } else if (snapshot.hasError) {
+                  return Text("Error: ${snapshot.error}");
+                } else {
+                  return Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: reservedHeight + 32.0,
+                    child: Center(
+                      child: FutureBuilder<void>(
+                        future: fetchCard(),
+                        builder: (BuildContext context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return CircularProgressIndicator();
+                          } else if (snapshot.hasError) {
+                            return Text('Error: ${snapshot.error}');
+                          } else {
+                            return Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: imageUrl.isEmpty
+                                  ? Container()
+                                  : Image.network(imageUrl),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  );
+                }
+              }),
           Positioned(
             left: 0,
             right: 0,
