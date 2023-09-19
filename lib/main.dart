@@ -61,7 +61,9 @@ class HomePageState extends State<HomePage> {
 
   void _listenForShake() {
     userAccelerometerEvents.listen((UserAccelerometerEvent event) {
-      if (event.x.abs() > 1.5 || event.y.abs() > 1.5 || event.z.abs() > 1.5) {
+      if (event.x.abs() > 20.0 ||
+          event.y.abs() > 20.0 ||
+          event.z.abs() > 20.0) {
         fetchCard();
       }
     });
