@@ -1,15 +1,32 @@
 import 'package:flutter/material.dart';
 import 'home_page.dart';
+import 'mock_db.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+
+  runApp(MyApp(
+    initialRoute: isLoggedIn ? '/home' : '/',
+  ));
 }
 
 class MyApp extends StatelessWidget {
+  final String initialRoute;
+
+  MyApp({required this.initialRoute});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: LoginPage(),
+      debugShowCheckedModeBanner: false,
+      initialRoute: initialRoute,
+      routes: {
+        '/': (context) => LoginPage(),
+        '/home': (context) => HomePage(),
+      },
     );
   }
 }
@@ -17,19 +34,33 @@ class MyApp extends StatelessWidget {
 class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    String enteredUsername = '';
+    String enteredPassword = '';
+
     return Scaffold(
       appBar: AppBar(title: Text('Login')),
       body: Column(
         children: [
           TextFormField(
             decoration: InputDecoration(labelText: 'Username'),
+            onChanged: (value) => enteredUsername = value,
           ),
           TextFormField(
             decoration: InputDecoration(labelText: 'Password'),
+            onChanged: (value) => enteredPassword = value,
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (context) => HomePage())),
+            onPressed: () async {
+              bool success =
+                  await MockDb.checkLogIn(enteredUsername, enteredPassword);
+              if (success) {
+                Navigator.pushReplacement(context,
+                    MaterialPageRoute(builder: (context) => HomePage()));
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Invalid credentials')));
+              }
+            },
             child: Text('Login'),
           ),
         ],
@@ -37,6 +68,7 @@ class LoginPage extends StatelessWidget {
     );
   }
 }
+
 
 
 

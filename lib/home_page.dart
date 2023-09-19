@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_sensors/flutter_sensors.dart';
+import 'main.dart'; // Importera denna för att använda LoginPage
+import 'mock_db.dart'; // Importera denna för att använda MockDb.handleLogout
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -119,57 +121,81 @@ class HomePageState extends State<HomePage> {
     double screenHeight = MediaQuery.of(context).size.height;
     double reservedHeight = screenHeight * 0.3;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home Page'),
-      ),
-      body: Stack(
-        children: [
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: reservedHeight + 32.0,
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: imageUrl.isEmpty ? Container() : Image.network(imageUrl),
+    return WillPopScope(
+      onWillPop: () async {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('You are already logged in')));
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Home Page'),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                await MockDb.handleLogout();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginPage()),
+                  (Route<dynamic> route) => false,
+                );
+              },
+              child: Text("Log out"),
+              style: ButtonStyle(
+                foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
               ),
             ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: reservedHeight,
-            child: Scrollbar(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: history
-                      .map((card) => TextButton(
-                            onPressed: () {
-                              setState(() {
-                                imageUrl = card['url']!;
-                              });
-                            },
-                            child: Text(card['name']!),
-                          ))
-                      .toList(),
+          ],
+        ),
+        body: Stack(
+          children: [
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: reservedHeight + 32.0,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child:
+                      imageUrl.isEmpty ? Container() : Image.network(imageUrl),
                 ),
               ),
             ),
-          ),
-          Positioned(
-            bottom: reservedHeight,
-            left: 0,
-            right: 0,
-            child: Align(
-              alignment: Alignment.center,
-              child: ElevatedButton(
-                  onPressed: fetchCard, child: const Text('New Card')),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: reservedHeight,
+              child: Scrollbar(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: history
+                        .map((card) => TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  imageUrl = card['url']!;
+                                });
+                              },
+                              child: Text(card['name']!),
+                            ))
+                        .toList(),
+                  ),
+                ),
+              ),
             ),
-          ),
-        ],
+            Positioned(
+              bottom: reservedHeight,
+              left: 0,
+              right: 0,
+              child: Align(
+                alignment: Alignment.center,
+                child: ElevatedButton(
+                    onPressed: fetchCard, child: Text('New Card')),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
