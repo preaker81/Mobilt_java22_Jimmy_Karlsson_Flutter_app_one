@@ -16,7 +16,7 @@ void main() async {
 class MyApp extends StatelessWidget {
   final String initialRoute;
 
-  MyApp({required this.initialRoute});
+  const MyApp({Key? key, required this.initialRoute}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -24,265 +24,52 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: initialRoute,
       routes: {
-        '/': (context) => LoginPage(),
-        '/home': (context) => HomePage(),
+        '/': (context) => const LoginPage(),
+        '/home': (context) => const HomePage(),
       },
     );
   }
 }
 
 class LoginPage extends StatelessWidget {
+  const LoginPage({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     String enteredUsername = '';
     String enteredPassword = '';
 
     return Scaffold(
-      appBar: AppBar(title: Text('Login')),
+      appBar: AppBar(title: const Text('Login')),
       body: Column(
         children: [
           TextFormField(
-            decoration: InputDecoration(labelText: 'Username'),
+            decoration: const InputDecoration(labelText: 'Username'),
             onChanged: (value) => enteredUsername = value,
           ),
           TextFormField(
-            decoration: InputDecoration(labelText: 'Password'),
+            decoration: const InputDecoration(labelText: 'Password'),
             onChanged: (value) => enteredPassword = value,
           ),
           ElevatedButton(
-            onPressed: () async {
-              bool success =
-                  await MockDb.checkLogIn(enteredUsername, enteredPassword);
-              if (success) {
-                Navigator.pushReplacement(context,
-                    MaterialPageRoute(builder: (context) => HomePage()));
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Invalid credentials')));
-              }
+            onPressed: () {
+              MockDb.checkLogIn(enteredUsername, enteredPassword)
+                  .then((success) {
+                if (success) {
+                  Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const HomePage()));
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Invalid credentials')));
+                }
+              });
             },
-            child: Text('Login'),
+            child: const Text('Login'),
           ),
         ],
       ),
     );
   }
 }
-
-
-
-
-
-// import 'dart:async';
-// import 'dart:convert';
-// import 'package:flutter/material.dart';
-// import 'package:http/http.dart' as http;
-// import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:flutter_sensors/flutter_sensors.dart';
-
-// void main() {
-//   runApp(MyApp());
-// }
-
-// class MyApp extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       home: LoginPage(),
-//     );
-//   }
-// }
-
-// class LoginPage extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(title: Text('Login')),
-//       body: Column(
-//         children: [
-//           TextFormField(
-//             decoration: InputDecoration(labelText: 'Username'),
-//           ),
-//           TextFormField(
-//             decoration: InputDecoration(labelText: 'Password'),
-//           ),
-//           ElevatedButton(
-//             onPressed: () => Navigator.pushReplacement(
-//                 context, MaterialPageRoute(builder: (context) => HomePage())),
-//             child: Text('Login'),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-// class HomePage extends StatefulWidget {
-//   const HomePage({Key? key}) : super(key: key);
-
-//   @override
-//   HomePageState createState() => HomePageState();
-// }
-
-// class HomePageState extends State<HomePage> {
-//   String imageUrl = "";
-//   List<Map<String, String>> history = [];
-//   late StreamSubscription _accelSubscription;
-//   bool canFetch = true;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _listenForShake();
-//     _initializePage();
-//   }
-
-//   Future<void> _initializePage() async {
-//     await Future.wait([
-//       _loadSavedImages(),
-//       fetchCard(),
-//     ]);
-//     setState(() {});
-//   }
-
-//   void _listenForShake() async {
-//     final stream = await SensorManager().sensorUpdates(
-//       sensorId: Sensors.ACCELEROMETER,
-//       interval: Sensors.SENSOR_DELAY_GAME,
-//     );
-
-//     _accelSubscription = stream.listen((sensorEvent) {
-//       final accelData = sensorEvent.data;
-//       if (accelData[0].abs() > 20.0 ||
-//           accelData[1].abs() > 20.0 ||
-//           accelData[2].abs() > 20.0) {
-//         if (canFetch) {
-//           fetchCard();
-//           canFetch = false;
-//           Timer(Duration(seconds: 2), () {
-//             canFetch = true;
-//           });
-//         }
-//       }
-//     });
-//   }
-
-//   @override
-//   void dispose() {
-//     _accelSubscription.cancel();
-//     super.dispose();
-//   }
-
-//   Future<void> _loadSavedImages() async {
-//     try {
-//       SharedPreferences prefs = await SharedPreferences.getInstance();
-//       var savedHistory = json.decode(prefs.getString('image_history') ?? '[]');
-//       List<Map<String, String>> tempHistory = [];
-
-//       for (var item in savedHistory) {
-//         tempHistory.add({
-//           'name': item['name'].toString(),
-//           'url': item['url'].toString(),
-//         });
-//       }
-
-//       setState(() {
-//         history = tempHistory;
-//       });
-//     } catch (e) {
-//       print("Exception in _loadSavedImages: $e");
-//     }
-//   }
-
-//   Future<void> _saveImage(String name, String url) async {
-//     try {
-//       SharedPreferences prefs = await SharedPreferences.getInstance();
-//       history.insert(0, {'name': name, 'url': url});
-//       if (history.length > 10) {
-//         history = history.sublist(0, 10);
-//       }
-//       prefs.setString('image_history', json.encode(history));
-//     } catch (e) {
-//       print("Exception in _saveImage: $e");
-//     }
-//   }
-
-//   Future<void> fetchCard() async {
-//     try {
-//       final response =
-//           await http.get(Uri.parse('https://api.scryfall.com/cards/random'));
-//       if (response.statusCode == 200) {
-//         final data = json.decode(response.body);
-//         setState(() {
-//           imageUrl = data['image_uris']['normal'];
-//           String cardName = data['name'];
-//           _saveImage(cardName, imageUrl);
-//         });
-//       } else {
-//         print('Failed to load card');
-//       }
-//     } catch (e) {
-//       print('Exception occurred: $e');
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     double screenHeight = MediaQuery.of(context).size.height;
-//     double reservedHeight = screenHeight * 0.3;
-
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Home Page'),
-//       ),
-//       body: Stack(
-//         children: [
-//           Positioned(
-//             top: 0,
-//             left: 0,
-//             right: 0,
-//             bottom: reservedHeight + 32.0,
-//             child: Center(
-//               child: Padding(
-//                 padding: const EdgeInsets.all(16.0),
-//                 child: imageUrl.isEmpty ? Container() : Image.network(imageUrl),
-//               ),
-//             ),
-//           ),
-//           Positioned(
-//             left: 0,
-//             right: 0,
-//             bottom: 0,
-//             height: reservedHeight,
-//             child: Scrollbar(
-//               child: SingleChildScrollView(
-//                 child: Column(
-//                   children: history
-//                       .map((card) => TextButton(
-//                             onPressed: () {
-//                               setState(() {
-//                                 imageUrl = card['url']!;
-//                               });
-//                             },
-//                             child: Text(card['name']!),
-//                           ))
-//                       .toList(),
-//                 ),
-//               ),
-//             ),
-//           ),
-//           Positioned(
-//             bottom: reservedHeight,
-//             left: 0,
-//             right: 0,
-//             child: Align(
-//               alignment: Alignment.center,
-//               child: ElevatedButton(
-//                   onPressed: fetchCard, child: const Text('New Card')),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }

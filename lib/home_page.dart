@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -49,7 +51,7 @@ class HomePageState extends State<HomePage> {
         if (canFetch) {
           fetchCard();
           canFetch = false;
-          Timer(Duration(seconds: 2), () {
+          Timer(const Duration(seconds: 2), () {
             canFetch = true;
           });
         }
@@ -123,8 +125,8 @@ class HomePageState extends State<HomePage> {
 
     return WillPopScope(
       onWillPop: () async {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('You are already logged in')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('You are already logged in')));
         return false;
       },
       child: Scaffold(
@@ -136,14 +138,14 @@ class HomePageState extends State<HomePage> {
                 await MockDb.handleLogout();
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => LoginPage()),
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
                   (Route<dynamic> route) => false,
                 );
               },
-              child: Text("Log out"),
               style: ButtonStyle(
                 foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
               ),
+              child: const Text("Log out"),
             ),
           ],
         ),
@@ -191,7 +193,7 @@ class HomePageState extends State<HomePage> {
               child: Align(
                 alignment: Alignment.center,
                 child: ElevatedButton(
-                    onPressed: fetchCard, child: Text('New Card')),
+                    onPressed: fetchCard, child: const Text('New Card')),
               ),
             ),
           ],

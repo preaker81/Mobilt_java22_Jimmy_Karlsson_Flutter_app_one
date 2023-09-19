@@ -2,8 +2,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class MockDb {
   static bool isLoggedIn = false;
-  static final String username = "user";
-  static final String password = "pass";
+  static const String username = "user";
+  static const String password = "pass";
 
   static Future<bool> checkLogIn(
       String enteredUsername, String enteredPassword) async {
