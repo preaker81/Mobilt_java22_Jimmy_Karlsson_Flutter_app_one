@@ -1,13 +1,11 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_sensors/flutter_sensors.dart';
-import 'main.dart'; // Importera denna för att använda LoginPage
-import 'mock_db.dart'; // Importera denna för att använda MockDb.handleLogout
+import 'main.dart';
+import 'mock_db.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -25,10 +23,11 @@ class HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _listenForShake();
-    _initializePage();
+    _listenForShake(); // Listen for accelerometer shake events
+    _initializePage(); // Initialize saved images and fetch a card
   }
 
+  // Initialize the page
   Future<void> _initializePage() async {
     await Future.wait([
       _loadSavedImages(),
@@ -37,6 +36,7 @@ class HomePageState extends State<HomePage> {
     setState(() {});
   }
 
+  // Listen for shake events from accelerometer
   void _listenForShake() async {
     final stream = await SensorManager().sensorUpdates(
       sensorId: Sensors.ACCELEROMETER,
@@ -65,6 +65,7 @@ class HomePageState extends State<HomePage> {
     super.dispose();
   }
 
+  // Load saved images from SharedPreferences
   Future<void> _loadSavedImages() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -82,10 +83,12 @@ class HomePageState extends State<HomePage> {
         history = tempHistory;
       });
     } catch (e) {
-      print("Exception in _loadSavedImages: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Exception in _loadSavedImages: $e")));
     }
   }
 
+  // Save image to SharedPreferences
   Future<void> _saveImage(String name, String url) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -95,10 +98,12 @@ class HomePageState extends State<HomePage> {
       }
       prefs.setString('image_history', json.encode(history));
     } catch (e) {
-      print("Exception in _saveImage: $e");
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Exception in _saveImage: $e")));
     }
   }
 
+  // Fetch a new card from the API
   Future<void> fetchCard() async {
     try {
       final response =
@@ -111,10 +116,12 @@ class HomePageState extends State<HomePage> {
           _saveImage(cardName, imageUrl);
         });
       } else {
-        print('Failed to load card');
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Failed to load card')));
       }
     } catch (e) {
-      print('Exception occurred: $e');
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Exception occurred: $e')));
     }
   }
 
@@ -125,8 +132,8 @@ class HomePageState extends State<HomePage> {
 
     return WillPopScope(
       onWillPop: () async {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('You are already logged in')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('You are already logged in')));
         return false;
       },
       child: Scaffold(
